@@ -1,0 +1,11 @@
+
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+<channel>
+  <title>Drug AI</title>
+  <atom:link href="https://drug-ai.github.io//feed.xml" rel="self" type="application/rss+xml" />
+  <link>https://drug-ai.github.io/</link>
+  <description>To be simple, to be powerful.</description>
+  
+</channel>
+</rss>
+
