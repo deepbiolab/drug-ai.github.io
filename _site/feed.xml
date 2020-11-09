@@ -1,0 +1,988 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Deep Learning for Drug &amp; Medical Research</title>
+    <description>I am a AI engineer of pharmaceutical and meidcal fields, graduated in Department of Medical Engineering. 
+ I want to apply AI Algorithm to these fields and wish to help people who has interested on drug discovery and healthcare projects.</description>
+    <link>http://localhost:4000/</link>
+    <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml" />
+    <pubDate>Mon, 09 Nov 2020 23:31:51 +0800</pubDate>
+    <lastBuildDate>Mon, 09 Nov 2020 23:31:51 +0800</lastBuildDate>
+    <generator>Jekyll v4.1.1</generator>
+    
+      <item>
+        <title>Data Representation - TODO</title>
+        <description>&lt;ul&gt;
+  &lt;li&gt;Endianness&lt;/li&gt;
+  &lt;li&gt;String (Char Sequence e.g. NULL &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;0x00&lt;/code&gt;)&lt;/li&gt;
+  &lt;li&gt;Unicode / UTF8&lt;/li&gt;
+  &lt;li&gt;Struct and Alignment&lt;/li&gt;
+  &lt;li&gt;Tagging
+    &lt;ul&gt;
+      &lt;li&gt;Tagged Pointer&lt;/li&gt;
+      &lt;li&gt;NaN tagging&lt;/li&gt;
+      &lt;li&gt;Tagged Integer (SMI)&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        <pubDate>Sun, 21 Jun 2020 00:00:00 +0800</pubDate>
+        <link>http://localhost:4000/2020/06/21/data-rep-todo/</link>
+        <guid isPermaLink="true">http://localhost:4000/2020/06/21/data-rep-todo/</guid>
+        
+        <category>笔记</category>
+        
+        <category>基础</category>
+        
+        <category>C</category>
+        
+        <category>C++</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Data Representation - Floating Point Numbers</title>
+        <description>&lt;p&gt;In the last episode we talked about the data representation of integer, a kind
+of fixed-point numbers. Today we’re going to learn about floating-point numbers.&lt;/p&gt;
+
+&lt;p&gt;Floating-point numbers are used to &lt;em&gt;approximate&lt;/em&gt; real numbers. Because of the 
+fact that all the stuffs in computers are, eventually, just a limited sequence 
+of bits. The representation of floating-point number had to made trade-offs 
+between &lt;em&gt;ranges&lt;/em&gt; and &lt;em&gt;precision&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;Due to its computational complexities, CPU also have a dedicated set of 
+instructions to accelerate on floating-point arithmetics.&lt;/p&gt;
+
+&lt;h2 id=&quot;terminologies&quot;&gt;Terminologies&lt;/h2&gt;
+
+&lt;p&gt;The terminologies of floating-point number is coming from the 
+&lt;a href=&quot;https://en.wikipedia.org/wiki/Scientific_notation&quot;&gt;&lt;em&gt;scientific notation&lt;/em&gt;&lt;/a&gt;, 
+where a real number can be represented as such:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;1.2345 = 12345 × 10 ** -4
+         -----   --    --
+  significand^   ^base  ^exponent
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;em&gt;significand&lt;/em&gt;, or &lt;em&gt;mantissa&lt;/em&gt;, 有效数字, 尾数&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;base&lt;/em&gt;, or &lt;em&gt;radix&lt;/em&gt; 底数&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;exponent&lt;/em&gt;, 幂&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;So where is the &lt;em&gt;floating point&lt;/em&gt;? It’s the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;.&lt;/code&gt; of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;1.2345&lt;/code&gt;. Imaging the dot
+can be float to the left by one to make the representation &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;.12345&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The dot is called &lt;em&gt;radix point&lt;/em&gt;, because to us it’s seem to be a &lt;em&gt;decimal point&lt;/em&gt;,
+but it’s really a &lt;em&gt;binary point&lt;/em&gt; in the computers.&lt;/p&gt;
+
+&lt;p&gt;Now it becomes clear that, to represent a floating-point number in computers,
+we will simply assign some bits for &lt;em&gt;significand&lt;/em&gt; and some for &lt;em&gt;exponent&lt;/em&gt;, and
+potentially a bit for &lt;em&gt;sign&lt;/em&gt; and that’s it.&lt;/p&gt;
+
+&lt;h2 id=&quot;ieee-754-32-bits-single-precision-floats-单精度浮点数&quot;&gt;IEEE-754 32-bits Single-Precision Floats 单精度浮点数&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Single-precision_floating-point_format&quot;&gt;https://en.wikipedia.org/wiki/Single-precision_floating-point_format&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;It was called &lt;strong&gt;single&lt;/strong&gt; back to IEEE-754-1985 and now &lt;strong&gt;binary32&lt;/strong&gt; in the 
+relatively new IEEE-754-2008 standard.&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;       &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;8&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;             &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;23&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;sign&lt;/span&gt;   &lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt;             &lt;span class=&quot;n&quot;&gt;fraction&lt;/span&gt; 
+  &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;   &lt;span class=&quot;mo&quot;&gt;011&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;    &lt;span class=&quot;mo&quot;&gt;000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;
+
+ &lt;span class=&quot;mi&quot;&gt;31&lt;/span&gt;   &lt;span class=&quot;mi&quot;&gt;30&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;....&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;23&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;22&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;.......................&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The &lt;em&gt;sign&lt;/em&gt; part took 1 bit to indicate the sign of the floats. (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;0&lt;/code&gt; for &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;+&lt;/code&gt; 
+and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;1&lt;/code&gt; for &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-&lt;/code&gt;. This is the same treatment as the &lt;a href=&quot;2020-06-19-data-rep-int.md##sign-magnitude-原码&quot;&gt;sign magnitute&lt;/a&gt;.&lt;/li&gt;
+  &lt;li&gt;The &lt;em&gt;exponent&lt;/em&gt; part took 8 bits and used &lt;a href=&quot;2020-06-19-data-rep-int.md#offset-binary-移码&quot;&gt;&lt;em&gt;offset-binary (biased) form&lt;/em&gt;&lt;/a&gt; to represent a signed integer. 
+It’s a variant form since it took out the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-127&lt;/code&gt; (all 0s) for zero and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;+128&lt;/code&gt; 
+(all 1s) for non-numbers, thus it ranges only &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;[-126, 127]&lt;/code&gt; instead of 
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;[-127, 128]&lt;/code&gt;. Then, it choose the zero offset of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;127&lt;/code&gt; in these 254 bits (like 
+using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;128&lt;/code&gt; in &lt;em&gt;excess-128&lt;/em&gt;), a.k.a the &lt;em&gt;exponent bias&lt;/em&gt; in the standard.&lt;/li&gt;
+  &lt;li&gt;The &lt;em&gt;fraction&lt;/em&gt; part took 23 bits with an &lt;em&gt;implicit leading bit&lt;/em&gt; &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;1&lt;/code&gt; and
+represent the actual &lt;em&gt;significand&lt;/em&gt; in total precision of 24-bits.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Don’t be confused by why it’s called &lt;em&gt;fraction&lt;/em&gt; instead of &lt;em&gt;significand&lt;/em&gt;! 
+It’s all because that the 23 bits in the representation is indeed, representing 
+the fraction part of the real significand in the scientific notation.&lt;/p&gt;
+
+&lt;p&gt;The floating-point version of “scientific notation” is more like:&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;leading&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; 
+   &lt;span class=&quot;mf&quot;&gt;1.&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fraction&lt;/span&gt;  &lt;span class=&quot;err&quot;&gt;×&lt;/span&gt;  &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;^&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt;   &lt;span class=&quot;err&quot;&gt;×&lt;/span&gt;  &lt;span class=&quot;n&quot;&gt;sign&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;           &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;So what number does the above bits represent?&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;n&quot;&gt;S&lt;/span&gt;     &lt;span class=&quot;n&quot;&gt;F&lt;/span&gt;   &lt;span class=&quot;err&quot;&gt;×&lt;/span&gt;  &lt;span class=&quot;n&quot;&gt;E&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;  &lt;span class=&quot;n&quot;&gt;R&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;  &lt;span class=&quot;mf&quot;&gt;1.&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;  &lt;span class=&quot;err&quot;&gt;×&lt;/span&gt;  &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;  &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Aha! It’s the real number &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;1&lt;/code&gt;! 
+Recall that the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;E = 0b0111 1111 = 0&lt;/code&gt; because it used a biased representation!&lt;/p&gt;
+
+&lt;p&gt;We will add more non-trivial examples later.&lt;/p&gt;
+
+&lt;h2 id=&quot;demoing-floats-in-cc&quot;&gt;Demoing Floats in C/C++&lt;/h2&gt;
+
+&lt;p&gt;Writing sample code converting between binaries (in hex) and floats are not
+as straightforward as it for integers. Luckily, there are still some hacks to 
+perform it:&lt;/p&gt;
+
+&lt;h3 id=&quot;c---unsafe-cast&quot;&gt;C - Unsafe Cast&lt;/h3&gt;
+
+&lt;p&gt;We unsafely cast a pointer to enable reinterpretation of the same binaries.&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x3f800000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// C doesn't have a floating literal taking hex.&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;%f &lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;   &lt;span class=&quot;c1&quot;&gt;// 1065353216.000000 (???)&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;uint32_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;u2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x3f800000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;u2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;   &lt;span class=&quot;c1&quot;&gt;// unsafe cast&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;%f &lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;      &lt;span class=&quot;c1&quot;&gt;// 1.000000&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;c---union-trick&quot;&gt;C - Union Trick&lt;/h3&gt;
+
+&lt;p&gt;Oh I really enjoyed this one…Union in C is not only untagged union, but also
+share the exact same chunk of memory. So we are doing the same reinterpretation,
+but in a more structural and technically fancier way.&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;stdint.h&amp;gt;
+#include &amp;lt;inttypes.h&amp;gt;
+#include &amp;lt;math.h&amp;gt;
+&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pi&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;M_PI&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;union&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;uint32_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;u&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f2u&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pi&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// we took the data as float&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;pi : %f&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;   : 0x%&quot;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PRIx32&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f2u&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;u&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// but interpret as uint32_t&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;pi&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;3.141593&lt;/span&gt;
+   &lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x40490fdb&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;N.B. this trick is well-known as &lt;a href=&quot;https://en.wikipedia.org/wiki/Type_punning&quot;&gt;type punning&lt;/a&gt;:&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;In computer science, type punning is a common term for any programming technique that subverts or circumvents the type system of a programming language in order to achieve an effect that would be difficult or impossible to achieve within the bounds of the formal language.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;c---reinterpret_cast&quot;&gt;C++ - &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;reinterpret_cast&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;C++ does provide such type punning to the standard language:&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;kt&quot;&gt;uint32_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;u&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x40490fdb&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;reinterpret_cast&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&amp;gt;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;u&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cout&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 3.14159&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;N.B. it still need to be a conversion between pointers, 
+see &lt;a href=&quot;https://en.cppreference.com/w/cpp/language/reinterpret_cast&quot;&gt;https://en.cppreference.com/w/cpp/language/reinterpret_cast&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Besides, C++ 17 does add a floating point literal that can take hex, but it
+works in a different way, using an explicit radix point in the hex:&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x1&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;.2&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;p3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 1.2 by 2^3&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cout&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;     &lt;span class=&quot;c1&quot;&gt;// 9&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;That’s try with another direction:&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;iostream&amp;gt;
+#include &amp;lt;stdint.h&amp;gt;
+#include &amp;lt;inttypes.h&amp;gt;
+&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;double&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;qNan&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;numeric_limits&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;double&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;quiet_NaN&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;0x%&quot;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PRIx64&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;reinterpret_cast&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uint64_t&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&amp;gt;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;qNan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt; 
+  &lt;span class=&quot;c1&quot;&gt;// 0x7ff8000000000000, the canonical qNaN!&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;representation-of-non-numbers&quot;&gt;Representation of Non-Numbers&lt;/h2&gt;
+
+&lt;p&gt;There are more in the IEEE-754!&lt;/p&gt;
+
+&lt;p&gt;Real numbers doesn’t satisfy &lt;a href=&quot;https://en.wikipedia.org/wiki/Closure_(mathematics)&quot;&gt;closure property&lt;/a&gt;
+as integers does. Notably, the set of real numbers is NOT closed under the 
+division! It could produce non-number results such as &lt;strong&gt;infinity&lt;/strong&gt; (e.g. &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;1/0&lt;/code&gt;) 
+and &lt;a href=&quot;https://en.wikipedia.org/wiki/NaN&quot;&gt;&lt;strong&gt;NaN (Not-a-Number)&lt;/strong&gt;&lt;/a&gt; (e.g. taking 
+a square root of a negative number).&lt;/p&gt;
+
+&lt;p&gt;It would be algebraically ideal if the set of floating-point numbers can be 
+closed under all floating-point arithmetics. That would made many people’s life
+easier. So the IEEE made it so! Non-numeber values are squeezed in.&lt;/p&gt;
+
+&lt;p&gt;We will also include the two zeros (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;+0&lt;/code&gt;/&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-0&lt;/code&gt;) into the comparison here, 
+since they are also special by being the only two demanding an &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;0x00&lt;/code&gt; exponent:&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;             &lt;span class=&quot;n&quot;&gt;binary&lt;/span&gt;                &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;n&quot;&gt;hex&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; 
+&lt;span class=&quot;o&quot;&gt;--------------------------------------------------------&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;00000000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;00000000000000000000000&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;00000000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;00000000000000000000000&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;8000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;−&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+
+&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;11111111&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;00000000000000000000000&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;7&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f80&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;infinity&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;11111111&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;00000000000000000000000&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ff80&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;−&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;infinity&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;11111111&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;10000000000000000000000&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_fc0&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;qNaN&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;canonical&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;11111111&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;00000000000000000000001&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_f80&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0001&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sNaN&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;one&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;of&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;them&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;      &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;8&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;  &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;23&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;sign&lt;/span&gt;  &lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt;  &lt;span class=&quot;n&quot;&gt;fraction&lt;/span&gt; 
+  &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;      &lt;span class=&quot;mo&quot;&gt;00&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;.0&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; 
+  &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;      &lt;span class=&quot;mo&quot;&gt;00&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;.0&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+  &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;      &lt;span class=&quot;n&quot;&gt;FF&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;.0&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;infinity&lt;/span&gt;
+  &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;      &lt;span class=&quot;n&quot;&gt;FF&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;.0&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;infinity&lt;/span&gt; 
+  &lt;span class=&quot;n&quot;&gt;_&lt;/span&gt;      &lt;span class=&quot;n&quot;&gt;FF&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;.0&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;qNaN&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;canonical&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;_&lt;/span&gt;      &lt;span class=&quot;n&quot;&gt;FF&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;..&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;.0&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sNaN&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;one&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;of&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;them&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Encodings of qNaN and sNaN are not specified in IEEE 754 and implemented 
+differently on different processors. Luckily, both x86 and ARM family use the
+“most significant bit of fraction” to indicate whether it’s quite.&lt;/p&gt;
+
+&lt;h3 id=&quot;more-on-nan&quot;&gt;More on NaN&lt;/h3&gt;
+
+&lt;p&gt;If we look carefully into the IEEE 754-2008 spec, in the &lt;em&gt;page35, 6.2.1&lt;/em&gt;, it 
+actually defined anything with exponent &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;FF&lt;/code&gt; and not a infinity (i.e. with 
+all the fraction bits being &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;0&lt;/code&gt;), a NaN!&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;All binary NaN bit strings have all the bits of the biased exponent field E set to 1 (see 3.4). A quiet NaN bit string should be encoded with the first bit (d1) of the trailing significand field T being 1. A signaling NaN bit string should be encoded with the first bit of the trailing significand field being 0.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;That implies, we actually had &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;2 ** 24 - 2&lt;/code&gt; of NaNs in a 32-bits float!
+The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;24&lt;/code&gt; came from the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;1&lt;/code&gt; sign bit plus &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;23&lt;/code&gt; fractions and the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;2&lt;/code&gt; excluded 
+were the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;+/- inf&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The continuous 22 bits inside the fraction looks quite a waste, and there
+would be even 51 bits of them in the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;double&lt;/code&gt;! We will see how to made them useful 
+in later episodes (spoiler: they are known as &lt;em&gt;NaN payload&lt;/em&gt;).&lt;/p&gt;
+
+&lt;p&gt;It’s also worth noting that it’s weird that the IEEE choose to use the MSB 
+instead of the sign bit for NaN quiteness/signalness:&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;It seems strange to me that the bit which signifies whether or not the NaN is signaling is the top bit of the mantissa rather than the sign bit; perhaps something about how floating point pipelines are implemented makes it less natural to use the sign bit to decide whether or not to raise a signal.
+– &lt;a href=&quot;https://anniecherkaev.com/the-secret-life-of-nan&quot;&gt;https://anniecherkaev.com/the-secret-life-of-nan&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;I guess it might be something related to the CPU pipeline? I don’t know yet.&lt;/p&gt;
+
+&lt;h3 id=&quot;equality-of-nans-and-zeros&quot;&gt;Equality of NaNs and Zeros.&lt;/h3&gt;
+
+&lt;p&gt;The spec defined a comparison with NaNs to return an &lt;strong&gt;unordered result&lt;/strong&gt;, that 
+means any comparison operation except &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;!=&lt;/code&gt;, i.e. &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;gt;=, &amp;lt;=, &amp;gt;, &amp;lt;, =&lt;/code&gt; between a 
+NaN and any other floating-point number would return &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;false&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;No surprised that most (if not every) language implemented such behaviours, e.g.
+in JavaScript:&lt;/p&gt;
+
+&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;kc&quot;&gt;NaN&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!==&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;NaN&lt;/span&gt;   &lt;span class=&quot;c1&quot;&gt;// true&lt;/span&gt;
+&lt;span class=&quot;kc&quot;&gt;NaN&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;===&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;NaN&lt;/span&gt;   &lt;span class=&quot;c1&quot;&gt;// false&lt;/span&gt;
+&lt;span class=&quot;kc&quot;&gt;NaN&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;  &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;      &lt;span class=&quot;c1&quot;&gt;// false&lt;/span&gt;
+&lt;span class=&quot;kc&quot;&gt;NaN&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;  &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;      &lt;span class=&quot;c1&quot;&gt;// false&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Position and negative zeros, however, are defined to be equal!&lt;/p&gt;
+
+&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;===&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// true, using the traditional JS equality&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;Object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;is&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// false, using the &quot;SameValue&quot; equality&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;In Cpp, we can tell them apart by looking at its sign bit:&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;cmath&amp;gt;   // signbit
+&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;cout&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.0&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.0&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;     &lt;span class=&quot;c1&quot;&gt;// 1&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;cout&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;signbit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.0&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 1&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;cout&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;signbit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.0&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 0&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;ieee-754-64-bits-double-precision-floats&quot;&gt;IEEE-754 64-bits Double-Precision Floats&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Double-precision_floating-point_format&quot;&gt;https://en.wikipedia.org/wiki/Double-precision_floating-point_format&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Now, the 64-bit versions floating-point number, known as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;double&lt;/code&gt;, is just a
+matter of scale:&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;       &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;11&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;            &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;52&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;sign&lt;/span&gt;   &lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt;             &lt;span class=&quot;n&quot;&gt;fraction&lt;/span&gt; 
+  &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;                 
+
+ &lt;span class=&quot;mi&quot;&gt;63&lt;/span&gt;   &lt;span class=&quot;mi&quot;&gt;62&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;....&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;52&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;51&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;.......................&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;ieee-754-2008-16-bits-short-floats&quot;&gt;IEEE-754-2008 16-bits Short Floats&lt;/h2&gt;
+
+&lt;p&gt;The 2008 edition of IEEE-754 also standardize the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;short float&lt;/code&gt;, which is 
+neither in C or C++ standard. Though compiler extension might include it.&lt;/p&gt;
+
+&lt;p&gt;It looks like:&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sign&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bits&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fraction&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bits&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;S&lt;/span&gt;            &lt;span class=&quot;n&quot;&gt;E&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;E&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;E&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;E&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;E&lt;/span&gt;         &lt;span class=&quot;n&quot;&gt;M&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;M&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;M&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;M&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;M&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;M&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;M&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;M&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;M&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;M&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Floating-point_arithmetic&quot;&gt;https://en.wikipedia.org/wiki/Floating-point_arithmetic&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www3.ntu.edu.sg/home/ehchua/programming/java/datarepresentation.html&quot;&gt;https://www3.ntu.edu.sg/home/ehchua/programming/java/datarepresentation.html&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        <pubDate>Sun, 21 Jun 2020 00:00:00 +0800</pubDate>
+        <link>http://localhost:4000/2020/06/21/data-rep-float/</link>
+        <guid isPermaLink="true">http://localhost:4000/2020/06/21/data-rep-float/</guid>
+        
+        <category>笔记</category>
+        
+        <category>基础</category>
+        
+        <category>C</category>
+        
+        <category>C++</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Data Representation - Integer</title>
+        <description>&lt;p&gt;Integers, or &lt;em&gt;whole number&lt;/em&gt; from elemental mathematics, are the most common and 
+fundamental numbers used in the computers. It’s represented as 
+&lt;em&gt;fixed-point numbers&lt;/em&gt;, contrast to &lt;em&gt;floating-point numbers&lt;/em&gt; in the machine. 
+Today we are going to learn a whole bunch of way to encode it.&lt;/p&gt;
+
+&lt;p&gt;There are mainly two properties to make a integer representation different:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;Size, of the number of bits used&lt;/strong&gt;.&lt;br /&gt;
+usually the power of 2. e.g. 8-bit, 16-bit, 32-bit, 64-bit.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;Signed or unsigned&lt;/strong&gt;.&lt;br /&gt;
+there are also multiple schemas to encode a signed integers.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;We are also gonna use the below terminologies throughout the post:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;em&gt;MSB&lt;/em&gt;: Most Significant Bit&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;LSB&lt;/em&gt;: Least Significant Bit&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;prerequisite---printf-recap&quot;&gt;Prerequisite - &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;printf&lt;/code&gt; Recap&lt;/h2&gt;
+
+&lt;p&gt;We will quickly recap the integers subset of usages of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;printf&lt;/code&gt;.
+Basically, we used &lt;em&gt;format specifier&lt;/em&gt; to interpolate values into strings:&lt;/p&gt;
+
+&lt;h3 id=&quot;format-specifier&quot;&gt;&lt;a href=&quot;http://www.cplusplus.com/reference/cstdio/printf/&quot;&gt;Format Specifier&lt;/a&gt;&lt;/h3&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;%[flags][width][.precision][length]specifier&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;specifier&lt;/code&gt;
+    &lt;ul&gt;
+      &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;d&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;i&lt;/code&gt; : signed decimal&lt;/li&gt;
+      &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;u&lt;/code&gt; : unsigned decimal&lt;/li&gt;
+      &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;c&lt;/code&gt; : char&lt;/li&gt;
+      &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;p&lt;/code&gt;: pointer addr&lt;/li&gt;
+      &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x&lt;/code&gt; / &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;X&lt;/code&gt; : lower/upper unsigned hex&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;length&lt;/code&gt;
+    &lt;ul&gt;
+      &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;l&lt;/code&gt; : long (at least 32)&lt;/li&gt;
+      &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ll&lt;/code&gt; : long long (at least 64)&lt;/li&gt;
+      &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;h&lt;/code&gt; : short (usually 16)&lt;/li&gt;
+      &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;hh&lt;/code&gt; : short short (usually 8)&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;namespace&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; 
+&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;  
+  &lt;span class=&quot;n&quot;&gt;cout&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Size of int = &quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;endl&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;  
+  &lt;span class=&quot;n&quot;&gt;cout&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Size of long = &quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;long&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;endl&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;  
+  &lt;span class=&quot;n&quot;&gt;cout&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Size of long long = &quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;long&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;long&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;  
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;  
+&lt;span class=&quot;n&quot;&gt;Output&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;32&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bit&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;gcc&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;compiler&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;8&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Output&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;64&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bit&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;gcc&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;compiler&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;8&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;8&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;inttypesh-from-c99&quot;&gt;&lt;a href=&quot;http://www.qnx.com/developers/docs/6.5.0/index.jsp?topic=%2Fcom.qnx.doc.dinkum_en_c99%2Finttypes.html&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;inttypes.h&lt;/code&gt; from C99&lt;/a&gt;&lt;/h3&gt;
+
+&lt;p&gt;Also in &lt;a href=&quot;https://en.cppreference.com/w/c/types/integer&quot;&gt;cppreference.com&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;c1&quot;&gt;// signed int (d or i)&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#define PRId8     &quot;hhd&quot;
+#define PRId16    &quot;hd&quot;
+#define PRId32    &quot;ld&quot;
+#define PRId64    &quot;lld&quot;
+&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// unsigned int (u)&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#define PRIu8     &quot;hhd&quot;
+#define PRIu16    &quot;hd&quot;
+#define PRIu32    &quot;ld&quot;
+#define PRIu64    &quot;lld&quot;
+&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// unsigned hex&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#define PRIx8     &quot;hhu&quot;
+#define PRIx16    &quot;hu&quot;
+#define PRIx32    &quot;lu&quot;
+#define PRIx64    &quot;llu&quot;
+&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// uintptr_t (64 bit machine word len)&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#define PRIxPTR   &quot;llx&quot;  
+&lt;/span&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;unsigned-integers&quot;&gt;Unsigned Integers&lt;/h2&gt;
+
+&lt;p&gt;The conversion between unsigned integers and binaries are trivial. 
+Here, we can represent 8 bits (i.e. a &lt;em&gt;byte&lt;/em&gt;) as a &lt;em&gt;hex pair&lt;/em&gt;, e.g. 
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;255 == 0xff == 0b11111111&lt;/code&gt;.&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;stdint.h&amp;gt;    // uintN_t
+#include &amp;lt;inttypes.h&amp;gt;  // PRI macros
+&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;u8&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;255&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;0x%02&quot;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PRIx8&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;u8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// 0xff&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;&quot;%&quot;&lt;/span&gt;   &lt;span class=&quot;n&quot;&gt;PRId8&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;u8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// 255&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;signed-integers&quot;&gt;Signed Integers&lt;/h2&gt;
+
+&lt;p&gt;Signed integers are more complicated. We need to cut those bits to halves 
+to represent both positive and negative integers somehow.&lt;/p&gt;
+
+&lt;p&gt;There are four well-known schemas to encode it, according to
+&lt;a href=&quot;https://en.wikipedia.org/wiki/Signed_number_representations&quot;&gt;signed number representation of wikipedia&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3 id=&quot;sign-magnitude-原码&quot;&gt;Sign magnitude 原码&lt;/h3&gt;
+
+&lt;p&gt;It’s also called &lt;em&gt;“sign and magnitude”&lt;/em&gt;. From the name we can see how straightforward it is:
+it’s basically put one bit (often the &lt;em&gt;MSB&lt;/em&gt;) as the &lt;em&gt;sign bit&lt;/em&gt; to represent &lt;em&gt;sign&lt;/em&gt; and the remaining bits indicating
+the magnitude (or absolute value), e.g.&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;  &lt;span class=&quot;n&quot;&gt;binary&lt;/span&gt;   &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sign&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;magn&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;  &lt;span class=&quot;kt&quot;&gt;unsigned&lt;/span&gt; 
+&lt;span class=&quot;o&quot;&gt;-----------|-----------|------------&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;111&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;128&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;111&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;   &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;255&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;It was used in early computer (IBM 7090) and now mainly used in the 
+&lt;em&gt;significand&lt;/em&gt; part in floating-point number&lt;/p&gt;
+
+&lt;p&gt;Pros:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;simple and nature for human&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Cons:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;2 way to represent zeros (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;+0&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-0&lt;/code&gt;)&lt;/li&gt;
+  &lt;li&gt;not as good for machine
+    &lt;ul&gt;
+      &lt;li&gt;add/sub/cmp require knowing the sign
+        &lt;ul&gt;
+          &lt;li&gt;complicate CPU ALU design; potentially more cycles&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;ones-complement-反码&quot;&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Ones%27_complement&quot;&gt;Ones’ complement&lt;/a&gt; 反码&lt;/h3&gt;
+
+&lt;p&gt;It form a negative integers by applying a &lt;em&gt;bitwise NOT&lt;/em&gt; 
+i.e. &lt;em&gt;complement&lt;/em&gt; of its positive counterparts.&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;  &lt;span class=&quot;n&quot;&gt;binary&lt;/span&gt;   &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;  &lt;span class=&quot;mx&quot;&gt;1s&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;comp&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;  &lt;span class=&quot;kt&quot;&gt;unsigned&lt;/span&gt; 
+&lt;span class=&quot;o&quot;&gt;-----------|-----------|------------&lt;/span&gt;
+&lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+&lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0001&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;mo&quot;&gt;0111&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;   &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;128&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1110&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;254&lt;/span&gt; 
+&lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;255&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;N.B. &lt;em&gt;MSB&lt;/em&gt; can still be signified by MSB.&lt;/p&gt;
+
+&lt;p&gt;It’s referred to as &lt;em&gt;ones’&lt;/em&gt; complement because the negative can be formed 
+by subtracting the positive &lt;strong&gt;from&lt;/strong&gt; &lt;em&gt;ones&lt;/em&gt;: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;1111 1111 (-0)&lt;/code&gt;&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;  &lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt;       &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0111&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt;       &lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;---------------------&lt;/span&gt;
+  &lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;      &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The benefits of the complement nature is that adding becomes simple, 
+except we need to do an &lt;em&gt;end-around carry&lt;/em&gt; to add resulting carry
+back to get the correct result.&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;  &lt;span class=&quot;mo&quot;&gt;0111&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt;       &lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0001&lt;/span&gt;      &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;126&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;---------------------&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;        &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+          &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;       &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;add&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;carry&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;1&quot;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;back&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;---------------------&lt;/span&gt;
+  &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0001&lt;/span&gt;        &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Pros:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Arithmetics on machien are fast.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Cons:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;still 2 zeros!&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;twos-complement-补码&quot;&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Two%27s_complement&quot;&gt;Twos’ complement&lt;/a&gt; 补码&lt;/h3&gt;
+
+&lt;p&gt;Most of the current architecture adopted this, including x86, MIPS, ARM, etc.
+It differed with one’s complement by one.&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;  &lt;span class=&quot;n&quot;&gt;binary&lt;/span&gt;   &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;  &lt;span class=&quot;mx&quot;&gt;2s&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;comp&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;  &lt;span class=&quot;kt&quot;&gt;unsigned&lt;/span&gt; 
+&lt;span class=&quot;o&quot;&gt;-----------|-----------|------------&lt;/span&gt;
+&lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+&lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0001&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;mo&quot;&gt;0111&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;   &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;128&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;128&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0001&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;   &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;129&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1110&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;254&lt;/span&gt; 
+&lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;255&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;N.B. &lt;em&gt;MSB&lt;/em&gt; can still be signified by MSB.&lt;/p&gt;
+
+&lt;p&gt;It’s referred to as &lt;em&gt;twos’&lt;/em&gt; complement because the negative can be formed 
+by subtracting the positive &lt;strong&gt;from&lt;/strong&gt; &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;2 ** N&lt;/code&gt; (congruent to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;0000 0000 (+0)&lt;/code&gt;),
+where &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;N&lt;/code&gt; is the number of bits.&lt;/p&gt;
+
+&lt;p&gt;E.g., for a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;uint8_t&lt;/code&gt;, the &lt;em&gt;sum&lt;/em&gt; of any number and it’s twos’ complement would 
+be &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;256 (1 0000 0000)&lt;/code&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;       &lt;span class=&quot;mi&quot;&gt;256&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;**&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;8&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0111&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt;       &lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;---------------------&lt;/span&gt;
+  &lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0001&lt;/span&gt;      &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Becuase of this, arithmetics becomes really easier, for any number &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;x&lt;/code&gt; e.g. &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;127&lt;/code&gt;
+we can get its twos’ complement by:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;~x =&amp;gt; 1000 0000&lt;/code&gt; bitwise NOT (like ones’ complement)&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;+1 =&amp;gt; 1000 0001&lt;/code&gt; add 1 (the one differed from ones’ complement)&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Cons:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;bad named?&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Pros:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;fast machine arithmatics.&lt;/li&gt;
+  &lt;li&gt;only 1 zeros!&lt;/li&gt;
+  &lt;li&gt;the minimal negative is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-128&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;offset-binary-移码&quot;&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Offset_binary&quot;&gt;Offset binary&lt;/a&gt; 移码&lt;/h3&gt;
+
+&lt;p&gt;It’s also called &lt;em&gt;excess-K&lt;/em&gt; (偏移 K) or &lt;em&gt;biased representation&lt;/em&gt;, where &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;K&lt;/code&gt; is
+the &lt;em&gt;biasing value&lt;/em&gt; (the new &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;0&lt;/code&gt;), e.g. in &lt;em&gt;excess-128&lt;/em&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;  &lt;span class=&quot;n&quot;&gt;binary&lt;/span&gt;   &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;  &lt;span class=&quot;n&quot;&gt;K&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;128&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;  &lt;span class=&quot;kt&quot;&gt;unsigned&lt;/span&gt; 
+&lt;span class=&quot;o&quot;&gt;-----------|-----------|------------&lt;/span&gt;
+&lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;   &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;128&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;K&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+&lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0001&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;   &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;mo&quot;&gt;0111&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0000&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;128&lt;/span&gt;  &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;K&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt; &lt;span class=&quot;mo&quot;&gt;0001&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;129&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1111&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;255&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;It’s now mainly used for the &lt;em&gt;exponent&lt;/em&gt; part of floating-point number.&lt;/p&gt;
+
+&lt;h2 id=&quot;type-conversion--printf&quot;&gt;Type Conversion &amp;amp; &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Printf&lt;/code&gt;&lt;/h2&gt;
+
+&lt;p&gt;This might be a little bit off topic, but I want to note down what I observed
+from experimenting. Basically, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;printf&lt;/code&gt; would not perform an implicit type
+conversion but merely &lt;em&gt;interpret&lt;/em&gt; the bits arrangement of your arguments as you 
+told it.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;em&gt;UB!&lt;/em&gt; stands for &lt;em&gt;undefined behaviors&lt;/em&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;u8&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mb&quot;&gt;0b10000000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// 128&lt;/span&gt;
+ &lt;span class=&quot;kt&quot;&gt;int8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s8&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mb&quot;&gt;0b10000000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// -128&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;%&quot;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PRIu8&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;u8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;          &lt;span class=&quot;c1&quot;&gt;// 128&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;%&quot;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PRId8&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;u8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;          &lt;span class=&quot;c1&quot;&gt;// 128 (UB! but somehow it's got right)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;%&quot;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PRId8&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int8_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;u8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// -128&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;%&quot;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PRId8&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;          &lt;span class=&quot;c1&quot;&gt;// -128&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;%&quot;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PRIu8&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;          &lt;span class=&quot;c1&quot;&gt;// 4294967168 (UB!)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;%&quot;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PRId8&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;s8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// 128&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;%&quot;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PRIxPTR&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;             &lt;span class=&quot;c1&quot;&gt;// ffffff80&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;%&quot;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PRIxPTR&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uintptr_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;s8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// ffffffffffffff80&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;char--ascii&quot;&gt;Char &amp;amp; &lt;a href=&quot;https://en.wikipedia.org/wiki/ASCII&quot;&gt;ASCII&lt;/a&gt;&lt;/h2&gt;
+
+&lt;p&gt;Traditionally, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;char&lt;/code&gt; is represented in the computer as 8 bits as well. And 
+really, ASCII is only defined between &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;0&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;127&lt;/code&gt; and require 7 bits. 
+(8-bit Extended ASCII is not quite well popularized and supported.)&lt;/p&gt;
+
+&lt;p&gt;It’s more complicated in extension such as &lt;em&gt;Unicode&lt;/em&gt; nowadays, but we’ll ignore 
+it for future posts dedicated for char and string representation.&lt;/p&gt;
+
+&lt;p&gt;So how is a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;char&lt;/code&gt; different with a &lt;em&gt;byte&lt;/em&gt;?&lt;/p&gt;
+
+&lt;p&gt;Well, the answer is whether a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;char&lt;/code&gt; is a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;signed char&lt;/code&gt; (backed by &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;int8_t&lt;/code&gt;) 
+or a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;unsigned char&lt;/code&gt; (backed by &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;uint8_t&lt;/code&gt;) is… &lt;em&gt;implementaton-defined&lt;/em&gt;. 
+And most systems made it &lt;em&gt;signed&lt;/em&gt; since most types (e.g. &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;int&lt;/code&gt;) were signed 
+by default.&lt;/p&gt;
+
+&lt;p&gt;N.B. &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;int&lt;/code&gt; is standard-defined to be equivalent to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;signed int&lt;/code&gt;. This is
+not the case of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;char&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;That’s why you often see such &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;typedef&lt;/code&gt; such as:&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;typedef&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;unsigned&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Byte_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;typedef&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;uint8_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;byte_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;to emphysize the nature of byte should be just plain, unsigned, bits.&lt;/p&gt;
+
+&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Integer_(computer_science)&quot;&gt;https://en.wikipedia.org/wiki/Integer_(computer_science)&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www3.ntu.edu.sg/home/ehchua/programming/java/datarepresentation.html&quot;&gt;https://www3.ntu.edu.sg/home/ehchua/programming/java/datarepresentation.html&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+</description>
+        <pubDate>Fri, 19 Jun 2020 00:00:00 +0800</pubDate>
+        <link>http://localhost:4000/2020/06/19/data-rep-int/</link>
+        <guid isPermaLink="true">http://localhost:4000/2020/06/19/data-rep-int/</guid>
+        
+        <category>笔记</category>
+        
+        <category>基础</category>
+        
+        <category>C</category>
+        
+        <category>C++</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>My Programming Languages Spectrum</title>
+        <description>&lt;iframe id=&quot;chart&quot; src=&quot;https://huangxuan.me/PL-chart/&quot; frameborder=&quot;0&quot; scrolling=&quot;no&quot; style=&quot;width: 100%&quot;&gt;
+&lt;/iframe&gt;
+</description>
+        <pubDate>Tue, 05 May 2020 00:00:00 +0800</pubDate>
+        <link>http://localhost:4000/2020/05/05/pl-chart/</link>
+        <guid isPermaLink="true">http://localhost:4000/2020/05/05/pl-chart/</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Hello 2015</title>
+        <description>&lt;blockquote&gt;
+  &lt;p&gt;“Yeah It’s on. ”&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Hux 的 Blog 就这么开通了。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;#build&quot;&gt;跳过废话，直接看技术实现 &lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;2015 年，Hux 总算有个地方可以好好写点东西了。&lt;/p&gt;
+
+&lt;p&gt;作为一个程序员， Blog 这种轮子要是挂在大众博客程序上就太没意思了。一是觉得大部分 Blog 服务都太丑，二是觉得不能随便定制不好玩。之前因为太懒没有折腾，结果就一直连个写 Blog 的地儿都没有。&lt;/p&gt;
+
+&lt;p&gt;在玩了一段时间知乎之后，答题的快感又激起了我开博客的冲动。之前的&lt;a href=&quot;http://huangxuan.me/portfolio&quot;&gt;个人网站&lt;/a&gt;是作品集形式的（现在集成进来了），并不适合用来写博文，一不做二不休，花一天搞一个吧！&lt;/p&gt;
+
+&lt;p id=&quot;build&quot;&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;正文&quot;&gt;正文&lt;/h2&gt;
+
+&lt;p&gt;接下来说说搭建这个博客的技术细节。&lt;/p&gt;
+
+&lt;p&gt;正好之前就有关注过 &lt;a href=&quot;https://pages.github.com/&quot;&gt;GitHub Pages&lt;/a&gt; + &lt;a href=&quot;http://jekyllrb.com/&quot;&gt;Jekyll&lt;/a&gt; 快速 Building Blog 的技术方案，非常轻松时尚。&lt;/p&gt;
+
+&lt;p&gt;其优点非常明显：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Markdown&lt;/strong&gt; 带来的优雅写作体验&lt;/li&gt;
+  &lt;li&gt;非常熟悉的 Git workflow ，&lt;strong&gt;Git Commit 即 Blog Post&lt;/strong&gt;&lt;/li&gt;
+  &lt;li&gt;利用 GitHub Pages 的域名和免费无限空间，不用自己折腾主机
+    &lt;ul&gt;
+      &lt;li&gt;如果需要自定义域名，也只需要简单改改 DNS 加个 CNAME 就好了&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Jekyll 的自定制非常容易，基本就是个模版引擎&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;本来觉得最大的缺点可能是 GitHub 在国内访问起来太慢，所以第二天一起床就到 GitCafe(Chinese GitHub Copy，现在被 Coding 收购了) 迁移了一个&lt;a href=&quot;http://huxpro.coding.me&quot;&gt;镜像&lt;/a&gt;出来，结果还是巨慢。&lt;/p&gt;
+
+&lt;p&gt;哥哥可是个前端好嘛！ 果断开 Chrome DevTool 查了下网络请求，原来是 &lt;strong&gt;pending 在了 Google Fonts&lt;/strong&gt; 上，页面渲染一直被阻塞到请求超时为止，难怪这么慢。&lt;br /&gt;
+忍痛割爱，只好把 Web Fonts 去了（反正超时看到的也只能是 fallback ），果然一下就正常了，而且 GitHub 和 GitCafe 对比并没有感受到明显的速度差异，虽然 github 的 ping 值明显要高一些，达到了 300ms，于是用 DNSPOD 优化了一下速度。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;配置的过程中也没遇到什么坑，基本就是 Git 的流程，相当顺手&lt;/p&gt;
+
+&lt;p&gt;大的 Jekyll 主题上直接 fork 了 Clean Blog（这个主题也相当有名，就不多赘述了。唯一的缺点大概就是没有标签支持，于是我给它补上了。）&lt;/p&gt;
+
+&lt;p&gt;本地调试环境需要 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;gem install jekyll&lt;/code&gt;，结果 rubygem 的源居然被墙了……后来手动改成了我大淘宝的镜像源才成功&lt;/p&gt;
+
+&lt;p&gt;Theme 的 CSS 是基于 Bootstrap 定制的，看得不爽的地方直接在 Less 里改就好了（平时更习惯 SCSS 些），&lt;strong&gt;不过其实我一直觉得 Bootstrap 在移动端的体验做得相当一般，比我在淘宝参与的团队 CSS 框架差多了……&lt;/strong&gt;所以为了体验，也补了不少 CSS 进去&lt;/p&gt;
+
+&lt;p&gt;最后就进入了耗时反而最长的&lt;strong&gt;做图、写字&lt;/strong&gt;阶段，也算是进入了&lt;strong&gt;写博客&lt;/strong&gt;的正轨，因为是类似 Hack Day 的方式去搭这个站的，所以折腾折腾着大半夜就过去了。&lt;/p&gt;
+
+&lt;p&gt;第二天考虑中文字体的渲染，fork 了 &lt;a href=&quot;http://www.typeisbeautiful.com/&quot;&gt;Type is Beautiful&lt;/a&gt; 的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;font&lt;/code&gt; CSS，调整了字号，适配了 Win 的渣渲染，中英文混排效果好多了。&lt;/p&gt;
+
+&lt;h2 id=&quot;后记&quot;&gt;后记&lt;/h2&gt;
+
+&lt;p&gt;回顾这个博客的诞生，纯粹是出于个人兴趣。在知乎相关问题上回答并获得一定的 star 后，我决定把这个博客主题当作一个小小的开源项目来维护。&lt;/p&gt;
+
+&lt;p&gt;在经历 v1.0 - v1.5 的蜕变后，这个博客主题愈发完整，不但增加了诸多 UI 层的优化（opinionated）；在代码层面，更加丰富的配置项也使得这个主题拥有了更好的灵活性与可拓展性。而作为一个开源项目，我也积极的为其完善文档与解决 issue。&lt;/p&gt;
+
+&lt;p&gt;如果你恰好逛到了这里，希望你也能喜欢这个博客主题。&lt;/p&gt;
+
+&lt;p&gt;—— Hux 后记于 2015.10&lt;/p&gt;
+
+</description>
+        <pubDate>Thu, 29 Jan 2015 20:00:00 +0800</pubDate>
+        <link>http://localhost:4000/2015/01/29/hello-2015/</link>
+        <guid isPermaLink="true">http://localhost:4000/2015/01/29/hello-2015/</guid>
+        
+        <category>生活</category>
+        
+        <category>Meta</category>
+        
+        
+      </item>
+    
+  </channel>
+</rss>
