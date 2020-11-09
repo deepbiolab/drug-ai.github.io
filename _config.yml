@@ -7,7 +7,7 @@ description: "I am a AI engineer of pharmaceutical and meidcal fields, graduated
 I want to apply AI Algorithm to these fields and wish to help people who has interested on drug discovery and healthcare projects."
 keyword: "Drug Discovery, QSAR, Drug properties prediction, De Novo drug design, Drug-target interactionprediction, Medical Images, EHR, Wearable Device"
 url: "https://drug-ai.github.io"              # your host, for absolute URL
-baseurl: ""                             # for example, '/blog' if your blog hosted on 'host/blog'
+baseurl: "/gallery"                             # for example, '/blog' if your blog hosted on 'host/blog'
 
 # Publish posts or collection documents with a future date.
 future: true
