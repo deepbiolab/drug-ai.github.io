@@ -5,10 +5,7 @@ layout: post
 author: "Hux"
 header-style: text
 tags:
-  - 笔记
-  - 基础
-  - C
-  - C++
+  - EHR
 ---
 
 In the last episode we talked about the data representation of integer, a kind

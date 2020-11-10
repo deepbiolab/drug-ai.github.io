@@ -6,10 +6,7 @@ author: "Hux"
 header-style: text
 hidden: true
 tags:
-  - 笔记
-  - 基础
-  - C
-  - C++
+  - Wearable Device
 ---
 
 - Endianness

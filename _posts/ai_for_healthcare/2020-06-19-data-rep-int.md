@@ -5,10 +5,7 @@ layout: post
 author: "Hux"
 header-style: text
 tags:
-  - 笔记
-  - 基础
-  - C
-  - C++
+  - Medical Images
 ---
 
 Integers, or _whole number_ from elemental mathematics, are the most common and 
