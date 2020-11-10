@@ -1,13 +1,13 @@
 ---
 layout:     post
-title:      "Hello 2015"
-subtitle:   " \"Hello World, Hello Blog\""
-date:       2015-01-29 12:00:00
-author:     "Hux"
+title:      "AI for Drug Discovery"
+subtitle:   "Review of Deep Learning in Pharmaceutic"
+date:       2020-11-10 12:00:00
+author:     "ShaneTin"
 header-img: "img/post-bg-2015.jpg"
 catalog: true
 tags:
-    - DTI Prediction
+    - Drug Discovery
 ---
 
 > “Yeah It's on. ”

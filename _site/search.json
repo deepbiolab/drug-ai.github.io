@@ -1,10 +1,18 @@
 [
   
     {
-      "title"    : "Hello2 2015",
-      "subtitle" : " &quot;Hello World, Hello Blog&quot;",
-      "tags"     : "De Novo drug design",
-      "url"      : "/2020/11/10/hello2-2015/",
+      "title"    : "AI for Healthcare",
+      "subtitle" : "Review of Deep Learning in Medical",
+      "tags"     : "Healthcare",
+      "url"      : "/2020/11/10/review-ai-for-healthcare/",
+      "date"     : "2020-11-10 20:00:00 +0800"
+    } ,
+  
+    {
+      "title"    : "AI for Drug Discovery",
+      "subtitle" : "Review of Deep Learning in Pharmaceutic",
+      "tags"     : "Drug Discovery",
+      "url"      : "/2020/11/10/review-ai-for-drug-discovery/",
       "date"     : "2020-11-10 20:00:00 +0800"
     } ,
   
@@ -54,22 +62,6 @@
       "tags"     : "Drug Properties Prediction",
       "url"      : "/2020/05/05/pl-chart/",
       "date"     : "2020-05-05 00:00:00 +0800"
-    } ,
-  
-    {
-      "title"    : "Hello 2015",
-      "subtitle" : " &quot;Hello World, Hello Blog&quot;",
-      "tags"     : "DTI Prediction",
-      "url"      : "/2015/01/29/hello3-2015/",
-      "date"     : "2015-01-29 20:00:00 +0800"
-    } ,
-  
-    {
-      "title"    : "Hello 2015",
-      "subtitle" : " &quot;Hello World, Hello Blog&quot;",
-      "tags"     : "Drug Properties Prediction",
-      "url"      : "/2015/01/29/hello-2015/",
-      "date"     : "2015-01-29 20:00:00 +0800"
     } 
   
 ]

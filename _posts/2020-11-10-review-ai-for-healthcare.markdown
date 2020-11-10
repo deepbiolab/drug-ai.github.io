@@ -1,13 +1,13 @@
 ---
 layout:     post
-title:      "Hello2 2015"
-subtitle:   " \"Hello World, Hello Blog\""
+title:      "AI for Healthcare"
+subtitle:   "Review of Deep Learning in Medical"
 date:       2020-11-10 12:00:00
-author:     "Hux"
+author:     "ShaneTin"
 header-img: "img/post-bg-2015.jpg"
 catalog: true
 tags:
-    - De Novo drug design
+    - Healthcare
 ---
 
 > “Yeah It's on. ”
