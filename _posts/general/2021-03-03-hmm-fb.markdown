@@ -39,7 +39,7 @@ where \quad S_{r}^{T} = \{s_1(1), s_2(2)... s_r(T)\}$$
 
 以一个具体的示例讲解
 
-![image](img/post-hmm/Forward-and-Backward-Algorithm-in-Hidden-Markov-Model-adeveloperdiary.com_.jpg)
+![image](images/Forward-and-Backward-Algorithm-in-Hidden-Markov-Model-adeveloperdiary.com_.jpg)
 
 上述通过隐状态生成的观测序列：$(sun, sun, rain) \to (happy, sad, happy)$可以计算生成概率
 
@@ -53,7 +53,7 @@ $$p(V^T|S_{r}^{T}) = \prod_{t=1}^{T}p(v(t)|s(t))$$
 
 我们可以计算$V^T$和与之对应的$S^T$的联合概率
 
-![image.png](img/post-hmm/Forward-and-Backward-Algorithm-in-Hidden-Markov-Model-adeveloperdiary.com-2.jpg)
+![image.png](images/Forward-and-Backward-Algorithm-in-Hidden-Markov-Model-adeveloperdiary.com-2.jpg)
 
 
 $$p(happy,sad,happy,sun,sun,rain) = p(sun|initial state) * p(sun|sun) * p(rain|sun) * p(happy|sun) * p(sad|sun) * p(happy|rain)$$
@@ -130,12 +130,12 @@ $$\begin{equation} \label{eq333}
 
 进一步得到通用公式
 
-![image.png](img/post-hmm/generalized-Equation.jpg)
+![image.png](images/generalized-Equation.jpg)
 
 
 当然也可以通过图示的方式
 
-![image.png](img/post-hmm/Forward-and-Backward-Algorithm-in-Hidden-Markov-Model-adeveloperdiary.com-4.jpg)
+![image.png](images/Forward-and-Backward-Algorithm-in-Hidden-Markov-Model-adeveloperdiary.com-4.jpg)
 
 上图如果用通用公式可以得到
 $$\alpha_{2}(t) = b_{2k}\sum_{i=1}^{M}\alpha_{i}(t-1)a_{i2}$$
@@ -146,7 +146,7 @@ $$\alpha_{3}(t) = b_{3k}\sum_{i=1}^{M}\alpha_{i}(t-1)a_{i3}$$
 
 总结：前向算法的递推关系如下
 
-![image.png](img/post-hmm/recursive-forward-equation.jpg)
+![image.png](images/recursive-forward-equation.jpg)
 
 ### Forward算法代码实现
 
@@ -220,9 +220,9 @@ $$\begin{equation} \label{eq6}
 
 当然也可以通过图示的方式
 
-![images.jpg](img/post-hmm/Forward-and-Backward-Algorithm-in-Hidden-Markov-Model-adeveloperdiary.com-5.jpg)
+![images.jpg](images/Forward-and-Backward-Algorithm-in-Hidden-Markov-Model-adeveloperdiary.com-5.jpg)
 
-![images.jpg](img/generialized-equation2.jpg)
+![images.jpg](imagesgenerialized-equation2.jpg)
 
 
 ```python
@@ -245,7 +245,4 @@ beta = backward(V, A, B)
 ```
 
 
-```python
-
-```
 
